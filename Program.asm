@@ -1,46 +1,41 @@
-include 'INCLUDE\WIN32AX.INC' ;Импортируем для функций MessageBox
+include 'INCLUDE\WIN32AX.INC'
 
 .data
-	string db 256 DUP(?) ;Переменная для хранения строки, которая потом будет выводиться в MessageBox
+	answerString db 256 DUP(?)
 .code
 	start:
-		mov ecx, 1 ;Регистр который выступает в роли счетчика в цикле. Инициализируем его числом 1
-		mov eax, 1 ;Начальное значение в регистре для умножения
+		mov ecx, 1 
+		mov eax, 1
 
-		firstCycle: ;Первый цикл для подсчета фаткориала, в котором мы устанавливаем значение, при котором происходит переполнение
-			inc ecx ;Увеличваем счетчик на один
+		findOverflowLoop:
+			inc ecx
 
-			mov ebx, ecx ;Переносим текущий счетчик (то есть число на которое хотим умножить)
-			mul ebx ;Умножаем
+			mov ebx, ecx
+			mul ebx
 
-			jb pEnd ;Отслеживаем переполнение. Если переполнение было то флаг CF будет утсановлен. Если флаг CF утсановлен, то переходи к pEnd
-				;Если флаг CF установлен в 1, то тогда можем использовать любой из следующих операторов безусловного перехода:
-				;JC/JNAE/JB, я использовал JB
-
-			jmp firstCycle	;Если переполнения не произошло то возвращаемся к началу цикла
+			jb calculateMaxFactorial
+			jmp findOverflowLoop
 
 
-		pEnd: ;Если мы пришли в этот блок кода значит произошло переполнение. Мы знаем номер, на котором произошло переполнение.
-			mov ebp, ecx ;Запоминаем номер элемента на котором произошло переполнение, чтобы потом вывести в ответ
+		calculateMaxFactorial:
+			mov ebp, ecx
+			mov eax, 1 
+			mov ebx, 1
 
-			mov eax, 1 ;Обновляем регистр eax для того чтобы заново посчитать значение факториала перед переполнением.
-			mov ebx, 1 ;Обновляем регистр ebx для того чтобы заново посчитать значение факториала перед переполнением.
+			findMaxFactorialLoop:
+				     dec ecx
+				     mov ebx, ecx
+				     mul ebx
 
-			secondCycle: ;Второй цикл для подсчета факториала, где мы считаем максимальное значение, при ктором не произойдет переполнение.
-				     dec ecx ;Каждый раз уменьшаем ecx
-				     mov ebx, ecx ;Переносим в ebx значение ecx (текущее значение счечтика)
-				     mul ebx ;Умножаем
+				     cmp ecx, 1
+				     je exitProgramm
 
-				     cmp ecx, 1 ;проверяем долшли ли мы до конца
-				     je exitProgramm ;Если ecx == 1, то мы посчитали интересующий нас факториал
-
-				     jmp secondCycle ;если ecx не равен 1, то тогда считаем факториал дальше
+				     jmp findMaxFactorialLoop
 
 
-		exitProgramm: ;Секция завершения программы
-			invoke wsprintf,string,"Индекс на котором произошло переполнение: %d. Максимальное значение факториала до переполнения: %d.",ebp, eax ;Инициализируем строку с ответом
-			invoke MessageBox,0,string,"Результат",MB_OK ;Выводим ответ в Message Box
-			invoke ExitProcess, 0 ;Завершаем программу
-
+		exitProgramm:
+			invoke wsprintf,answerString,"Index where overflow happens: %d. Maximum factorial value before overflow: %d.",ebp, eax
+			invoke MessageBox,0,answerString,"Program end",MB_OK
+			invoke ExitProcess, 0
        .end start
 
